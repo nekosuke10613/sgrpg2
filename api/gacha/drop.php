@@ -26,11 +26,9 @@ define('GACHA_PRICE', 300);
 //-------------------------------------------------
 // 引数を受け取る
 //-------------------------------------------------
-// ユーザーIDを受け取る
-$uid = isset($_GET['uid'])?  $_GET['uid']:null;
+$uid = getQueryUserID();
 
-// Validation
-if( ($uid === null) || (!is_numeric($uid)) ){
+if( !$uid ){
   sendResponse(false, 'Invalid uid');
   exit(1);
 }
@@ -58,8 +56,7 @@ $sql4 = 'SELECT * FROM Chara WHERE id=:charaid';
 // SQLを実行
 //-------------------------------------------------
 try{
-  $dbh = new PDO($dsn, $user, $pw);   // 接続
-  $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);  // エラーモード
+  $dbh = connectDB();
   
   // トランザクション開始
   $dbh->beginTransaction();
@@ -67,9 +64,9 @@ try{
   //---------------------------
   // 所持金の残高を取得
   //---------------------------
-  $sth = $dbh->prepare($sql1);
-  $sth->bindValue(':userid', $uid, PDO::PARAM_INT);
-  $sth->execute();
+  $sth = query($dbh, $sql1, [
+            ['name'=>':userid', 'value'=>$uid, 'type'=>PDO::PARAM_INT]
+           ]);
   $buff = $sth->fetch(PDO::FETCH_ASSOC);
 
   if( $buff === false ){
@@ -86,10 +83,10 @@ try{
   //---------------------------
   // 残高を減らす
   //---------------------------
-  $sth = $dbh->prepare($sql2);
-  $sth->bindValue(':price',  GACHA_PRICE, PDO::PARAM_INT);
-  $sth->bindValue(':userid', $uid,        PDO::PARAM_INT);
-  $sth->execute();
+  $sth = query($dbh, $sql2, [
+            ['name'=>':price',  'value'=>GACHA_PRICE, 'type'=>PDO::PARAM_INT],
+            ['name'=>':userid', 'value'=>$uid,        'type'=>PDO::PARAM_INT]
+           ]);
 
   //---------------------------
   // キャラクターを抽選
@@ -99,17 +96,17 @@ try{
   //---------------------------
   // キャラクターを所有
   //---------------------------
-  $sth = $dbh->prepare($sql3);
-  $sth->bindValue(':userid',  $uid,     PDO::PARAM_INT);
-  $sth->bindValue(':charaid', $charaid, PDO::PARAM_INT);
-  $sth->execute();
+  $sth = query($dbh, $sql3, [
+            ['name'=>':userid',  'value'=>$uid,     'type'=>PDO::PARAM_INT],
+            ['name'=>':charaid', 'value'=>$charaid, 'type'=>PDO::PARAM_INT]
+           ]);
   
   //---------------------------
   // キャラクター情報を取得
   //---------------------------
-  $sth = $dbh->prepare($sql4);
-  $sth->bindValue(':charaid', $charaid, PDO::PARAM_INT);
-  $sth->execute();
+  $sth = query($dbh, $sql4, [
+            ['name'=>':charaid', 'value'=>$charaid, 'type'=>PDO::PARAM_INT]
+           ]);
   $chara = $sth->fetch(PDO::FETCH_ASSOC);
 
   //---------------------------

@@ -27,34 +27,25 @@ define('DEFAULT_MONEY', 3000);
 $sql1 = 'INSERT INTO User(lv, exp, money) VALUES(:lv, :exp, :money)';
 $sql2 = 'SELECT LAST_INSERT_ID() as id';  // AUTO INCREMENTした値を取得する
 
-
 //-------------------------------------------------
 // SQLを実行
 //-------------------------------------------------
 try{
-  $dbh = new PDO($dsn, $user, $pw);   // 接続
-  $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);  // エラーモード
+  $dbh = connectDB();
 
   //-------------------------------------------------
   // 新規にレコードを作成
   //-------------------------------------------------
-  // SQL準備
-  $sth = $dbh->prepare($sql1);
-  $sth->bindValue(':lv',    DEFAULT_LV,    PDO::PARAM_INT);
-  $sth->bindValue(':exp',   DEFAULT_EXP,   PDO::PARAM_INT);
-  $sth->bindValue(':money', DEFAULT_MONEY, PDO::PARAM_INT);
-
-  // 実行
-  $sth->execute();
+  $sth = query($dbh, $sql1, [
+            ['name'=>':lv',    'value'=>DEFAULT_LV,    'type'=>PDO::PARAM_INT],
+            ['name'=>':exp',   'value'=>DEFAULT_EXP,   'type'=>PDO::PARAM_INT],
+            ['name'=>':money', 'value'=>DEFAULT_MONEY, 'type'=>PDO::PARAM_INT]
+           ]);
 
   //-------------------------------------------------
   // AUTO INCREMENTした値を取得
   //-------------------------------------------------
-  // SQL準備
-  $sth = $dbh->prepare($sql2);
-
-  // 実行
-  $sth->execute();
+  $sth = query($dbh, $sql2);
 
   // 実行結果から1レコード取ってくる
   $buff = $sth->fetch(PDO::FETCH_ASSOC);

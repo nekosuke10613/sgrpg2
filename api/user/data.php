@@ -16,11 +16,9 @@ require_once("../util.php");
 //-------------------------------------------------
 // 引数を受け取る
 //-------------------------------------------------
-// ユーザーIDを受け取る
-$uid = isset($_GET['uid'])?  $_GET['uid']:null;
+$uid = getQueryUserID();
 
-// Validation
-if( ($uid === null) || (!is_numeric($uid)) ){
+if( !$uid ){
   sendResponse(false, 'Invalid uid');
   exit(1);
 }
@@ -35,15 +33,10 @@ $sql = 'SELECT * FROM User WHERE id=:id';  // Userテーブルの指定列を取
 // SQLを実行
 //-------------------------------------------------
 try{
-  $dbh = new PDO($dsn, $user, $pw);   // 接続
-  $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);  // エラーモード
-  $sth = $dbh->prepare($sql);         // SQL準備
-
-  // プレースホルダに値を入れる
-  $sth->bindValue(':id', $uid, PDO::PARAM_INT);
-
-  // 実行
-  $sth->execute();
+  $dbh = connectDB();
+  $sth = query($dbh, $sql, [
+            ['name'=>':id', 'value'=>$uid, 'type'=>PDO::PARAM_INT]
+           ]);
 
   // 実行結果から1レコード取ってくる
   $buff = $sth->fetch(PDO::FETCH_ASSOC);
