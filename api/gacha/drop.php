@@ -11,7 +11,9 @@
 //-------------------------------------------------
 // ライブラリ
 //-------------------------------------------------
-require('../util.php');
+require_once('../util.php');
+require_once('../../model/gacha.php');
+require_once('../../model/user.php');
 
 //-------------------------------------------------
 // 定数
@@ -26,7 +28,7 @@ define('GACHA_PRICE', 300);
 //-------------------------------------------------
 // 引数を受け取る
 //-------------------------------------------------
-$uid = getQueryUserID();
+$uid = UserModel::getUserIDfromQuery();
 
 if( !$uid ){
   sendResponse(false, 'Invalid uid');

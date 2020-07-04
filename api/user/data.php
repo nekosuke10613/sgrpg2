@@ -12,11 +12,12 @@
 // ライブラリ
 //-------------------------------------------------
 require_once("../util.php");
+require_once("../../model/user.php");
 
 //-------------------------------------------------
 // 引数を受け取る
 //-------------------------------------------------
-$uid = getQueryUserID();
+$uid = UserModel::getUserIDfromQuery();
 
 if( !$uid ){
   sendResponse(false, 'Invalid uid');
@@ -24,22 +25,11 @@ if( !$uid ){
 }
 
 //-------------------------------------------------
-// 準備
-//-------------------------------------------------
-// 実行したいSQL
-$sql = 'SELECT * FROM User WHERE id=:id';  // Userテーブルの指定列を取得
-
-//-------------------------------------------------
 // SQLを実行
 //-------------------------------------------------
 try{
-  $dbh = connectDB();
-  $sth = query($dbh, $sql, [
-            ['name'=>':id', 'value'=>$uid, 'type'=>PDO::PARAM_INT]
-           ]);
-
-  // 実行結果から1レコード取ってくる
-  $buff = $sth->fetch(PDO::FETCH_ASSOC);
+  $user = new UserModel();
+  $buff = $user->getRecordById($uid);
 }
 catch( PDOException $e ) {
   sendResponse(false, 'Database error: '.$e->getMessage());  // 本来エラーメッセージはサーバ内のログへ保存する(悪意のある人間にヒントを与えない)
@@ -51,7 +41,7 @@ catch( PDOException $e ) {
 //-------------------------------------------------
 // データが0件
 if( $buff === false ){
-  sendResponse(false, 'Not Fund user');
+  sendResponse(false, 'Not Found user');
 }
 // データを正常に取得
 else{
