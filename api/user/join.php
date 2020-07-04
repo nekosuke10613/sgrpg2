@@ -9,6 +9,11 @@
 // ini_set('error_reporting', E_ALL);
 
 //-------------------------------------------------
+// ライブラリ
+//-------------------------------------------------
+require('../util.php');
+
+//-------------------------------------------------
 // 初期値
 //-------------------------------------------------
 define('DEFAULT_LV', 1);
@@ -18,10 +23,6 @@ define('DEFAULT_MONEY', 3000);
 //-------------------------------------------------
 // 準備
 //-------------------------------------------------
-$dsn  = 'mysql:dbname=sgrpg;host=127.0.0.1';  // 接続先を定義
-$user = 'senpai';      // MySQLのユーザーID
-$pw   = 'indocurry';   // MySQLのパスワード
-
 // 実行したいSQL
 $sql1 = 'INSERT INTO User(lv, exp, money) VALUES(:lv, :exp, :money)';
 $sql2 = 'SELECT LAST_INSERT_ID() as id';  // AUTO INCREMENTした値を取得する
@@ -75,17 +76,3 @@ else{
   sendResponse(true, $buff['id']);
 }
 
-/**
- * 実行結果をJSON形式で返却する
- *
- * @param boolean $status
- * @param array   $value
- * @return void
- */
-function sendResponse($status, $value=[]){
-  header('Content-type: application/json');
-  echo json_encode([
-    'status' => $status,
-    'result' => $value
-  ]);
-}
