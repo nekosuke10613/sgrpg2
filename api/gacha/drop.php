@@ -12,18 +12,9 @@
 // ライブラリ
 //-------------------------------------------------
 require_once('../util.php');
-require_once('../../model/gacha.php');
 require_once('../../model/user.php');
-
-//-------------------------------------------------
-// 定数
-//-------------------------------------------------
-// キャラクター数
-define('MAX_CHARA', 10);
-
-// ガチゃ1回の価格
-define('GACHA_PRICE', 300);
-
+require_once('../../model/gacha.php');
+require_once('../../model/chara.php');
 
 //-------------------------------------------------
 // 引数を受け取る
@@ -35,104 +26,52 @@ if( !$uid ){
   exit(1);
 }
 
-//-------------------------------------------------
-// 準備
-//-------------------------------------------------
-//---------------------------
-// 実行したいSQL
-//---------------------------
-// Userテーブルから所持金を取得
-$sql1 = 'SELECT money FROM User WHERE id=:userid';
-
-// Userテーブルの所持金を減産
-$sql2 = 'UPDATE User SET money=money-:price WHERE id=:userid';
-
-// UserCharaテーブルにキャラクターを追加
-$sql3 = 'INSERT INTO UserChara(user_id, chara_id) VALUES(:userid,:charaid)';
-
-// Charaテーブルから1レコード取得
-$sql4 = 'SELECT * FROM Chara WHERE id=:charaid';
-
 
 //-------------------------------------------------
 // SQLを実行
 //-------------------------------------------------
+$gacha = new GachaModel();
+$chara_id = $gacha->drop();  // 抽選のみ
+
 try{
-  $dbh = connectDB();
-  
-  // トランザクション開始
-  $dbh->beginTransaction();
+  $user = new UserModel();
+  $user->begin();
 
-  //---------------------------
-  // 所持金の残高を取得
-  //---------------------------
-  $sth = query($dbh, $sql1, [
-            ['name'=>':userid', 'value'=>$uid, 'type'=>PDO::PARAM_INT]
-           ]);
-  $buff = $sth->fetch(PDO::FETCH_ASSOC);
-
-  if( $buff === false ){
-    sendResponse(false, 'Not Found User');
-    exit(1);
-  }
-  
-  // 残高が足りているかチェック
-  if( $buff['money'] < GACHA_PRICE ){
-    sendResponse(false, 'The balance is not enough');
+  // お金を消費
+  $ret = $user->useMoney($uid, GachaModel::$PRICE);
+  if( $ret === false ){
+    sendResponse(false, $user->getError());
     exit(1);
   }
 
-  //---------------------------
-  // 残高を減らす
-  //---------------------------
-  $sth = query($dbh, $sql2, [
-            ['name'=>':price',  'value'=>GACHA_PRICE, 'type'=>PDO::PARAM_INT],
-            ['name'=>':userid', 'value'=>$uid,        'type'=>PDO::PARAM_INT]
-           ]);
-
-  //---------------------------
-  // キャラクターを抽選
-  //---------------------------
-  $charaid = random_int(1, MAX_CHARA);
-
-  //---------------------------
-  // キャラクターを所有
-  //---------------------------
-  $sth = query($dbh, $sql3, [
-            ['name'=>':userid',  'value'=>$uid,     'type'=>PDO::PARAM_INT],
-            ['name'=>':charaid', 'value'=>$charaid, 'type'=>PDO::PARAM_INT]
-           ]);
-  
-  //---------------------------
-  // キャラクター情報を取得
-  //---------------------------
-  $sth = query($dbh, $sql4, [
-            ['name'=>':charaid', 'value'=>$charaid, 'type'=>PDO::PARAM_INT]
-           ]);
-  $chara = $sth->fetch(PDO::FETCH_ASSOC);
-
-  //---------------------------
-  // トランザクション確定
-  //---------------------------
-  $dbh->commit();
+  // キャラクターを所有  
+  $user->addChara($uid, $chara_id);
+  $user->commit();
 }
 catch( PDOException $e ) {
-  // ロールバック
-  $dbh->rollBack();
-
-  sendResponse(false, 'Database error: '.$e->getMessage());  // 本来エラーメッセージはサーバ内のログへ保存する(悪意のある人間にヒントを与えない)
+  $user->rollback();
+  sendResponse(false, 'Database error1: '.$e->getMessage());
   exit(1);
 }
 
 //-------------------------------------------------
 // 実行結果を返却
 //-------------------------------------------------
+try{
+  $chara = new CharaModel();
+  $buff = $chara->getRecordById($chara_id);
+}
+catch( PDOException $e ) {
+  sendResponse(false, 'Database error2: '.$e->getMessage());
+  exit(1);
+}
+
 // データが0件
 if( $buff === false ){
   sendResponse(false, 'System Error');
 }
 // データを正常に取得
 else{
-  sendResponse(true, $chara);
+  sendResponse(true, $buff);
 }
 
