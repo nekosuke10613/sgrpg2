@@ -17,10 +17,10 @@ require_once("../../model/user.php");
 //-------------------------------------------------
 // 引数を受け取る
 //-------------------------------------------------
-$uid = UserModel::getUserIDfromQuery();
+$token = UserModel::getTokenfromQuery();
 
-if( !$uid ){
-  sendResponse(false, 'Invalid uid');
+if( !$token ){
+  sendResponse(false, 'Invalid token');
   exit(1);
 }
 
@@ -29,7 +29,13 @@ if( !$uid ){
 //-------------------------------------------------
 try{
   $user = new UserModel();
-  $buff = $user->getRecordById($uid);
+  $uid  = $user->getUserIdByToken($token);
+  if( $uid !== false ){
+    $buff = $user->getRecordById($uid);
+  }
+  else{
+    $buff = false;
+  }
 }
 catch( PDOException $e ) {
   sendResponse(false, 'Database error: '.$e->getMessage());  // 本来エラーメッセージはサーバ内のログへ保存する(悪意のある人間にヒントを与えない)

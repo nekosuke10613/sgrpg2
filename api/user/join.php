@@ -19,7 +19,7 @@ require_once("../../model/user.php");
 //-------------------------------------------------
 try{
   $user = new UserModel();
-  $uid = $user->join();
+  $user->join();
 }
 catch( PDOException $e ) {
   sendResponse(false, 'Database error: '.$e->getMessage());  // 本来エラーメッセージはサーバ内のログへ保存する(悪意のある人間にヒントを与えない)
@@ -30,11 +30,11 @@ catch( PDOException $e ) {
 // 実行結果を返却
 //-------------------------------------------------
 // データが0件
-if( $uid === false ){
+if( $user->uid === false ){
   sendResponse(false, 'Database error: can not fetch LAST_INSERT_ID()');
 }
 // データを正常に取得
 else{
-  sendResponse(true, $uid);
+  sendResponse(true, $user->token);
 }
 

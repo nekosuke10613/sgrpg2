@@ -19,10 +19,10 @@ require_once('../../model/chara.php');
 //-------------------------------------------------
 // 引数を受け取る
 //-------------------------------------------------
-$uid = UserModel::getUserIDfromQuery();
+$token = UserModel::getTokenfromQuery();
 
-if( !$uid ){
-  sendResponse(false, 'Invalid uid');
+if( !$token ){
+  sendResponse(false, 'Invalid token');
   exit(1);
 }
 
@@ -35,6 +35,15 @@ $chara_id = $gacha->drop();  // 抽選のみ
 
 try{
   $user = new UserModel();
+
+  // ユーザーIDを取得
+  $uid = $user->getUserIdByToken($token);
+  if( $uid === false ){
+    sendResponse(false, 'Not Found User');
+    exit(1);
+  }
+
+  // トランザクション開始
   $user->begin();
 
   // お金を消費
