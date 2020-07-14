@@ -19,7 +19,8 @@ class UserModel extends Model{
     ['name'=>':lv',    'value'=>1,    'type'=>PDO::PARAM_INT],
     ['name'=>':exp',   'value'=>1,    'type'=>PDO::PARAM_INT],
     ['name'=>':money', 'value'=>3000, 'type'=>PDO::PARAM_INT],
-    ['name'=>':token', 'value'=>null, 'type'=>PDO::PARAM_STR]
+    ['name'=>':token', 'value'=>null, 'type'=>PDO::PARAM_STR],
+    [['name'=>':chara_id', 'value'=>1 ,'type'=>PDO::PARAM_INT]]
   ];
 
   // トークンの文字列長
@@ -61,9 +62,15 @@ class UserModel extends Model{
     $this->query($sql2);
     $buff = $this->fetch();
 
+    
+
     // プロパティに保存
     $this->token = $token;
     $this->uid = $buff['id'];    
+
+    // 
+    
+    
   }
 
   /**
@@ -129,6 +136,23 @@ class UserModel extends Model{
      ];
 
     return( $this->query($sql, $bind) );
+  }
+  
+
+  function getCharas($uid){
+
+    $sql3 = 'SELECT chara_id from UserChara where user_id=1';
+    $bind = [ ['name'=>':chara', 'value'=>$token, 'type'=>PDO::PARAM_INT] ];
+
+    $this->query($sql3, $bind);
+    $buff = $this->fetch();
+    
+    if( $buff !== false ){
+      return($buff['chara_id']);
+    }
+    else{
+      return(false);
+    }
   }
 
   /**

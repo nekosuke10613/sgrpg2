@@ -36,6 +36,7 @@ try{
   else{
     $buff = false;
   }
+  $charas=$user->getCharas($uid);
 }
 catch( PDOException $e ) {
   sendResponse(false, 'Database error: '.$e->getMessage());  // 本来エラーメッセージはサーバ内のログへ保存する(悪意のある人間にヒントを与えない)
